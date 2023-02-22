@@ -1,8 +1,21 @@
 const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
+const google = require('googleapis').google
 
 exports.sendMail = async (baseUrl, user, subject, message) => {
     try {
+
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.CLIENT_ID,
+            process.env.CLIENT_SECRET,
+            process.env.REDIRECT_URL
+        );
+
+        const ASCESS_TOKEN = oauth2Client.getAccessToken((err, token) => {
+
+        })
+
+
         const { email, _id } = user
 
         const token = jwt.sign({ id: _id }, process.env.JWT_SECRET);
@@ -22,8 +35,8 @@ exports.sendMail = async (baseUrl, user, subject, message) => {
                 clientId: process.env.CLIENT_ID,
                 clientSecret: process.env.CLIENT_SECRET,
                 refreshToken: process.env.REFRESH_TOKEN,
-                accessToken: process.env.ASCESS_TOKEN,
-                expires: process.env.EXPIRES
+                accessToken: ASCESS_TOKEN,
+
             }
         });
 
