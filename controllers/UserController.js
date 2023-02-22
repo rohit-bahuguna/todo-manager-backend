@@ -102,7 +102,7 @@ exports.sendVerificationMail = async (req, res) => {
 exports.sendForgetMail = async (req, res) => {
 	try {
 		const { email } = req.body
-		console.log(email);
+
 		const user = await userModel.findOne({ email });
 
 		const baseUrl = `${process.env.ORIGIN}/forgetpassword`

@@ -18,7 +18,11 @@ exports.sendMail = async (baseUrl, user, subject, message) => {
             auth: {
                 type: "OAuth2",
                 user: process.env.SMTP_USER,
-                pass: process.env.SMPT_PASS
+                pass: process.env.SMPT_PASS,
+                clientId: process.env.CLIENT_ID,
+                clientSecret: process.env.CLIENT_SECRET,
+                refreshToken: process.env.REFRESH_TOKEN,
+                accessToken: process.env.ASCESS_TOKEN
             }
         });
 
