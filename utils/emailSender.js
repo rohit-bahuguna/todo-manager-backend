@@ -16,6 +16,7 @@ exports.sendMail = async (baseUrl, user, subject, message) => {
             port: 465,
             secure: true,
             auth: {
+                type: "OAuth2",
                 user: process.env.SMTP_USER,
                 pass: process.env.SMPT_PASS
             }
