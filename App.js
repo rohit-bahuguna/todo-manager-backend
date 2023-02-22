@@ -8,7 +8,7 @@ const cookieParser = require('cookie-parser');
 
 
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
 	cors({
@@ -16,11 +16,11 @@ app.use(
 		credentials: true
 	})
 );
-console.log(process.env.ORIGIN);
+
 app.use(cookieParser());
 
 app.get('/', (req, res) => {
-	const url = `${process.env.ORIGIN}/verify/`;
+	const url = `${process.env.ORIGIN}`;
 	res.status(200).json({
 		success: true,
 		message: `Server is runing at port ${process.env.PORT}`,
