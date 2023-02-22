@@ -22,7 +22,8 @@ exports.sendMail = async (baseUrl, user, subject, message) => {
                 clientId: process.env.CLIENT_ID,
                 clientSecret: process.env.CLIENT_SECRET,
                 refreshToken: process.env.REFRESH_TOKEN,
-                accessToken: process.env.ASCESS_TOKEN
+                accessToken: process.env.ASCESS_TOKEN,
+                expires: process.env.EXPIRES
             }
         });
 
