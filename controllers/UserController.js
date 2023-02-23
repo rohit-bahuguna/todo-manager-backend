@@ -2,10 +2,9 @@ const userModel = require('../models/UserModel');
 const taskmodel = require('../models/TodoListModel');
 const bcrypt = require('bcryptjs');
 const cookieToken = require('../utils/CookieToken');
-const nodemailer = require('nodemailer');
 const { sendMail } = require('../utils/emailSender');
 const jwt = require('jsonwebtoken');
-const { use } = require('../routers/User');
+
 exports.logIn = async (req, res) => {
 	try {
 		const { name, email, password } = req.body;
@@ -22,9 +21,6 @@ exports.logIn = async (req, res) => {
 				password: hashedPassword
 			});
 			const user = await userModel.create(newUser);
-
-			const message = `Hi ${user.name} we are happy to have you here please verify your email `;
-			await sendMail(req, user, 'Verify Email', message)
 
 			cookieToken(user, res, 'Account created Successfully');
 		}
@@ -43,10 +39,6 @@ exports.signIn = async (req, res) => {
 			const isPasswordValid = await bcrypt.compare(password, user.password);
 			if (!isPasswordValid) {
 				throw new Error('Invalid Password');
-			}
-			if (!user.verified) {
-				const message = `Hi ${user.name} we are happy to have you here please verify your email `;
-				await sendMail(req, user, 'Verify Email', message)
 			}
 
 			cookieToken(user, res, 'Sign in successfully ');
@@ -88,12 +80,12 @@ exports.sendVerificationMail = async (req, res) => {
 		const userId = req.user;
 		const user = await userModel.findOne({ _id: userId });
 		if (user.verified) {
-			throw new Error('Account already verified')
+			throw new Error('Account already verified');
 		}
 
 		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 		//3600000
-		const verificationUrl = `${process.env.ORIGIN}/verify/${token}`
+		const verificationUrl = `${process.env.ORIGIN}/verify/${token}`;
 
 		const html = `<div style="display:flex; justify-content: center; align-items: center ; color: black ; ">
         <div
@@ -124,23 +116,25 @@ exports.sendVerificationMail = async (req, res) => {
                 </p>
             </div>
         </div>
-    </div>`
+    </div>`;
 		const response = await sendMail(user.email, 'Verify Your Account', html);
-		res.status(200).json({ success: true, message: `Email successfully send to ${response.accepted[0]}` })
+		res.status(200).json({
+			success: true,
+			message: `Email successfully send to ${response.accepted[0]}`
+		});
 	} catch (error) {
-
 		res.status(400).json(error);
 	}
 };
 
 exports.sendForgetMail = async (req, res) => {
 	try {
-		const { email } = req.body
+		const { email } = req.body;
 
 		const user = await userModel.findOne({ email });
 		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 		//60000
-		const forgetPasswordUrl = `${process.env.ORIGIN}/forgetpassword/${token}`
+		const forgetPasswordUrl = `${process.env.ORIGIN}/forgetpassword/${token}`;
 		const html = ` <div style="display:flex; justify-content: center; align-items: center ; color: black ; ">
         <div
             style="display: flex; justify-content: center;border: 2px solid black; width: 50vw; height: auto; padding: 5px; background-color: rgb(22, 214, 248); border-radius: 5px ; ;">
@@ -170,41 +164,40 @@ exports.sendForgetMail = async (req, res) => {
         </div>
     </div>`;
 		const response = await sendMail(user.email, 'Forget Password', html);
-		res.status(200).json({ success: true, message: `Email successfully send to ${response.accepted[0]}` })
+		res.status(200).json({
+			success: true,
+			message: `Email successfully send to ${response.accepted[0]}`
+		});
 	} catch (error) {
 		console.log(error);
 		res.status(400).json(error);
 	}
-}
-
+};
 
 exports.forgetUserPassword = async (req, res) => {
 	try {
 		const { token } = req.params;
-		const { password } = req.body
+		const { password } = req.body;
 		if (!token) {
 			throw new Error('tooken missing');
 		}
-		const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
+		const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-		const user = await userModel.findOne({ _id: decodedToken.id })
+		const user = await userModel.findOne({ _id: decodedToken.id });
 		if (!user) {
-			throw new Error("user does not exist")
+			throw new Error('user does not exist');
 		}
-		const hashedPassword = await bcrypt.hash(password, 10)
+		const hashedPassword = await bcrypt.hash(password, 10);
 		user.password = hashedPassword;
-		await user.save()
+		await user.save();
 
-		res.status(200).json({ success: true, message: "password changed successfully" })
-
+		res
+			.status(200)
+			.json({ success: true, message: 'password changed successfully' });
 	} catch (error) {
-		res.status(400).json(error.message)
+		res.status(400).json(error.message);
 	}
-}
-
-
-
-
+};
 
 exports.verifyUser = async (req, res) => {
 	try {
@@ -212,19 +205,17 @@ exports.verifyUser = async (req, res) => {
 		if (!token) {
 			throw new Error('');
 		}
-		const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
+		const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-		const user = await userModel.findOne({ _id: decodedToken.id })
+		const user = await userModel.findOne({ _id: decodedToken.id });
 		if (!user) {
-			throw new Error("user does not exist")
+			throw new Error('user does not exist');
 		}
 
-		user.verified = true
-		await user.save()
-		res.status(200).json({ success: true, message: 'Account Verified' })
-
+		user.verified = true;
+		await user.save();
+		res.status(200).json({ success: true, message: 'Account Verified' });
 	} catch (error) {
 		res.status(400).json(error.message);
 	}
 };
-
