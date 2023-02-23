@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
 const google = require('googleapis').google
 
-exports.sendMail = async (baseUrl, user, subject, message) => {
+exports.sendMail = async (email, subject, html) => {
     try {
 
         const oauth2Client = new google.auth.OAuth2(
@@ -14,14 +14,6 @@ exports.sendMail = async (baseUrl, user, subject, message) => {
         const ASCESS_TOKEN = oauth2Client.getAccessToken((err, token) => {
 
         })
-
-
-        const { email, _id } = user
-
-        const token = jwt.sign({ id: _id }, process.env.JWT_SECRET);
-
-
-        const url = `${baseUrl}/${token}`;
 
         const transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -45,13 +37,13 @@ exports.sendMail = async (baseUrl, user, subject, message) => {
             from: process.env.SMTP_USER,
             to: email,
             subject: subject,
-            text: message,
-            html: `<h2> Verify to : <a href=${url}>Click Here</a>  </h2>`
+            html: html
         });
 
 
         return info
     } catch (error) {
+
         console.log(error);
     }
 }

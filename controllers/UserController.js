@@ -90,11 +90,45 @@ exports.sendVerificationMail = async (req, res) => {
 		if (user.verified) {
 			throw new Error('Account already verified')
 		}
-		const baseUrl = `${process.env.ORIGIN}/verify`
-		const message = `Hi ${user.name} we are happy to have you here please verify your email `;
-		const response = await sendMail(baseUrl, user, 'Verify Email', message);
-		res.status(200).json({ success: true, message: `email successfully send to ${response.accepted[0]}` })
+
+		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+		//3600000
+		const verificationUrl = `${process.env.ORIGIN}/verify/${token}`
+
+		const html = `<div style="display:flex; justify-content: center; align-items: center ; color: black ; ">
+        <div
+            style="display: flex; justify-content: center;border: 2px solid black; width: 50vw; height: auto; padding: 5px; background-color: rgb(22, 214, 248); border-radius: 5px ; ;">
+            <div style="text-align: center ;">
+                <h1>Verify Account</h1>
+                <h3>Hi <h1>${user.name}</h1> Welcome to Task Manager</h3>
+
+
+
+                <p>
+                    A verify account event has been triggered. The verify account window is limited to two hours.
+
+                <p>
+                    If you do not verify your account within ome hours, you will need to submit a new request from your profile tab.
+                </p>
+
+                To verify account visit the following link:
+
+                </p>
+                <a href=${verificationUrl} style="border: 2px solid black ;padding: 7px ; border-radius: 15px; text-decoration: none ;background-color: rgb(40, 242, 13);
+                color: black;
+                    font-weight: bold;">Verify
+                    Account</a>
+                <p>if this button does not work click on the below link</p>
+                <p><span>Link: </span> <a href=${verificationUrl}>
+                       ${verificationUrl}</a>
+                </p>
+            </div>
+        </div>
+    </div>`
+		const response = await sendMail(user.email, 'Verify Your Account', html);
+		res.status(200).json({ success: true, message: `Email successfully send to ${response.accepted[0]}` })
 	} catch (error) {
+
 		res.status(400).json(error);
 	}
 };
@@ -104,12 +138,41 @@ exports.sendForgetMail = async (req, res) => {
 		const { email } = req.body
 
 		const user = await userModel.findOne({ email });
+		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+		//60000
+		const forgetPasswordUrl = `${process.env.ORIGIN}/forgetpassword/${token}`
+		const html = ` <div style="display:flex; justify-content: center; align-items: center ; color: black ; ">
+        <div
+            style="display: flex; justify-content: center;border: 2px solid black; width: 50vw; height: auto; padding: 5px; background-color: rgb(22, 214, 248); border-radius: 5px ; ;">
+            <div style="text-align: center ;">
+                <h1>Reset Password</h1>
+                <h3>Hi <h1>${user.name}</h1> Welcome to Task Manager</h3>
 
-		const baseUrl = `${process.env.ORIGIN}/forgetpassword`
-		const message = `Hi ${user.name} `;
-		const response = await sendMail(baseUrl, user, 'Forget Password', message);
+
+
+                <p>
+                    A password reset event has been triggered. The password reset window is limited to two hours.
+
+                <p>
+                    If you do not reset your password within 10 minutes, you will need to submit a new request.
+                </p>
+
+                To Reset Password, visit the following link:
+                </p>
+                <a href=${forgetPasswordUrl} style="border: 2px solid black ;padding: 7px ; border-radius: 15px; text-decoration: none ;background-color: rgb(40, 242, 13);
+                color: black;
+                    font-weight: bold;">Reset Password</a>
+                <p>if this button does not work click on the below link</p>
+                <p><span>Link: </span> <a href=${forgetPasswordUrl}>
+                       ${forgetPasswordUrl}</a>
+                </p>
+            </div>
+        </div>
+    </div>`;
+		const response = await sendMail(user.email, 'Forget Password', html);
 		res.status(200).json({ success: true, message: `Email successfully send to ${response.accepted[0]}` })
 	} catch (error) {
+		console.log(error);
 		res.status(400).json(error);
 	}
 }
