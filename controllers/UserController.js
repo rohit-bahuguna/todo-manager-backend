@@ -83,13 +83,15 @@ exports.sendVerificationMail = async (req, res) => {
 			throw new Error('Account already verified');
 		}
 
-		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+			expiresIn: '60m'
+		});
 		//3600000
 		const verificationUrl = `${process.env.ORIGIN}/verify/${token}`;
 
 		const html = `<div style="display:flex; justify-content: center; align-items: center ; color: black ; ">
         <div
-            style="display: flex; justify-content: center;border: 2px solid black; width: 50vw; height: auto; padding: 5px; background-color: rgb(22, 214, 248); border-radius: 5px ; ;">
+            style="display: flex; justify-content: center;border: 2px solid black; width: auto; height: auto; padding: 5px; background-color: rgb(22, 214, 248); border-radius: 5px ; ;">
             <div style="text-align: center ;">
                 <h1>Verify Account</h1>
                 <h3>Hi <h1>${user.name}</h1> Welcome to Task Manager</h3>
@@ -97,10 +99,10 @@ exports.sendVerificationMail = async (req, res) => {
 
 
                 <p>
-                    A verify account event has been triggered. The verify account window is limited to two hours.
+                    A verify account event has been triggered. The verify account window is limited to ONE HOUR.
 
                 <p>
-                    If you do not verify your account within ome hours, you will need to submit a new request from your profile tab.
+                    If you do not verify your account within ONE HOUR , you will need to submit a new request from your profile tab.
                 </p>
 
                 To verify account visit the following link:
@@ -132,12 +134,16 @@ exports.sendForgetMail = async (req, res) => {
 		const { email } = req.body;
 
 		const user = await userModel.findOne({ email });
-		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-		//60000
-		const forgetPasswordUrl = `${process.env.ORIGIN}/forgetpassword/${token}`;
+		const newJwtSecret = process.env.JWT_SECRET + user.password;
+		const token = jwt.sign({ id: user._id }, newJwtSecret, {
+			expiresIn: '15m'
+		});
+
+		const forgetPasswordUrl = `${process.env
+			.ORIGIN}/forgetpassword/${token}/${user._id}`;
 		const html = ` <div style="display:flex; justify-content: center; align-items: center ; color: black ; ">
         <div
-            style="display: flex; justify-content: center;border: 2px solid black; width: 50vw; height: auto; padding: 5px; background-color: rgb(22, 214, 248); border-radius: 5px ; ;">
+            style="display: flex; justify-content: center;border: 2px solid black; width: auto; height: auto; padding: 5px; background-color: rgb(22, 214, 248); border-radius: 5px ; ;">
             <div style="text-align: center ;">
                 <h1>Reset Password</h1>
                 <h3>Hi <h1>${user.name}</h1> Welcome to Task Manager</h3>
@@ -170,23 +176,27 @@ exports.sendForgetMail = async (req, res) => {
 		});
 	} catch (error) {
 		console.log(error);
-		res.status(400).json(error);
+		res.status(400).json(error.message);
 	}
 };
 
 exports.forgetUserPassword = async (req, res) => {
 	try {
-		const { token } = req.params;
+		const { token, id } = req.params;
 		const { password } = req.body;
-		if (!token) {
-			throw new Error('tooken missing');
+		if (!token || !id) {
+			throw new Error('this link has been currapted');
 		}
-		const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-
-		const user = await userModel.findOne({ _id: decodedToken.id });
+		const user = await userModel.findOne({ _id: id });
 		if (!user) {
 			throw new Error('user does not exist');
 		}
+
+		const newJwtSecret = process.env.JWT_SECRET + user.password;
+
+		const decodedToken = jwt.verify(token, newJwtSecret);
+		console.log(decodedToken);
+
 		const hashedPassword = await bcrypt.hash(password, 10);
 		user.password = hashedPassword;
 		await user.save();

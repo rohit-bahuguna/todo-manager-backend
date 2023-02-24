@@ -16,8 +16,8 @@ userRoute.route('/login').post(logIn);
 userRoute.route('/signin').post(signIn);
 userRoute.route('/logout').get(logOut);
 userRoute.route('/getuserdata').get(isLoggedIn, getuserData);
-userRoute.route(`/mailverification`).get(isLoggedIn, sendVerificationMail)
-userRoute.route('/verify/:token').get(isLoggedIn, verifyUser)
-userRoute.route('/forgetpasswordmail').post(sendForgetMail)
-userRoute.route('/forgetuserpassword/:token').post(forgetUserPassword)
+userRoute.route(`/mailverification`).get(isLoggedIn, sendVerificationMail);
+userRoute.route('/verify/:token').get(isLoggedIn, verifyUser);
+userRoute.route('/forgetpasswordmail').post(sendForgetMail);
+userRoute.route('/forgetuserpassword/:token/:id').post(forgetUserPassword);
 module.exports = userRoute;
