@@ -1,4 +1,3 @@
-const { findByIdAndDelete } = require('../models/TodoListModel');
 const todoModel = require('../models/TodoListModel');
 
 exports.createTodoItem = async (req, res) => {
@@ -30,7 +29,7 @@ exports.getAllItemsOfaUser = async (req, res) => {
 		res.status(200).json({
 			success: true,
 			tasks: allItems,
-			totalTasks : allItems.length
+			totalTasks: allItems.length
 		});
 	} catch (error) {
 		res.status(400).json(error.message);

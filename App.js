@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
+const fileUpload = require('express-fileupload');
 
 if (process.env.NODE_ENV === 'production') {
 	const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {
@@ -26,17 +27,12 @@ if (process.env.NODE_ENV === 'production') {
 	app.use(morgan('tiny'));
 }
 
-morgan(function(tokens, req, res) {
-	return [
-		tokens.method(req, res),
-		tokens.url(req, res),
-		tokens.status(req, res),
-		tokens.res(req, res, 'content-length'),
-		'-',
-		tokens['response-time'](req, res),
-		's'
-	].join(' ');
-});
+app.use(
+	fileUpload({
+		useTempFiles: true,
+		tempFileDir: '/tmp/'
+	})
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

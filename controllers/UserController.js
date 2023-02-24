@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const cookieToken = require('../utils/CookieToken');
 const { sendMail } = require('../utils/emailSender');
 const jwt = require('jsonwebtoken');
+const { findOneAndUpdate } = require('../models/UserModel');
 
 exports.logIn = async (req, res) => {
 	try {
@@ -32,15 +33,17 @@ exports.logIn = async (req, res) => {
 exports.signIn = async (req, res) => {
 	try {
 		const { email, password } = req.body;
-		const user = await userModel.findOne({ email });
+
+		const user = await userModel.findOne({ email }).select('+password');
+
 		if (!user) {
-			throw new Error('User does not exist');
+			throw new Error('Account does not exist');
 		} else {
 			const isPasswordValid = await bcrypt.compare(password, user.password);
 			if (!isPasswordValid) {
 				throw new Error('Invalid Password');
 			}
-
+			user.password = undefined;
 			cookieToken(user, res, 'Sign in successfully ');
 		}
 	} catch (error) {
@@ -225,6 +228,50 @@ exports.verifyUser = async (req, res) => {
 		user.verified = true;
 		await user.save();
 		res.status(200).json({ success: true, message: 'Account Verified' });
+	} catch (error) {
+		res.status(400).json(error.message);
+	}
+};
+
+// Admin controllers
+
+exports.adminGetAllUsers = async (req, res) => {
+	try {
+		const verifiedUser = await userModel.find({
+			verified: true,
+			role: { $ne: 'admin' }
+		});
+		const unVerifiedUser = await userModel.find({
+			verified: false,
+			role: { $ne: 'admin' }
+		});
+
+		res.status(200).json({
+			success: true,
+			verifiedUser,
+			unVerifiedUser,
+			totalVerifiedUsers: verifiedUser.length,
+			totalUnVerifiedUsers: unVerifiedUser.length
+		});
+	} catch (error) {
+		res.status(400).json(error.message);
+	}
+};
+
+exports.adminChangeRoles = async (req, res) => {
+	try {
+		const { role, userId } = req.body;
+		if (!role || !userId) {
+			throw new Error('invalid user information');
+		}
+		const user = await userModel.findOneAndUpdate(
+			{ _id: userId },
+			{ role },
+			{ new: true }
+		);
+		res
+			.status(200)
+			.json({ success: true, message: 'Role updated successfully', user });
 	} catch (error) {
 		res.status(400).json(error.message);
 	}

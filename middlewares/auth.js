@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const UserModel = require('../models/UserModel');
-const isLoggedIn = async (req, res, next) => {
+
+exports.isLoggedIn = async (req, res, next) => {
 	try {
 		const token = req.cookies.token;
 		if (!token) {
@@ -15,4 +16,15 @@ const isLoggedIn = async (req, res, next) => {
 	}
 };
 
-module.exports = isLoggedIn;
+exports.customRole = (...roles) => {
+	return (req, res, next) => {
+		try {
+			if (!roles.includes(req.user.role)) {
+				throw new Error('access denided');
+			}
+			next();
+		} catch (error) {
+			res.status(400).json(error.message);
+		}
+	};
+};
