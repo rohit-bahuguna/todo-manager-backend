@@ -2,7 +2,7 @@ const assignTaskModel = require('../models/AssignedTask');
 const cloudinary = require('cloudinary').v2;
 // Manager Controller
 
-exports.assignTaskToUser = async (req, res) => {
+exports.assignTask = async (req, res) => {
 	try {
 		const {
 			title,

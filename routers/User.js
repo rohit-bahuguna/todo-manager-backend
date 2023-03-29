@@ -2,7 +2,7 @@ const express = require('express');
 const userRoute = express.Router();
 
 const {
-	logIn,
+	signUp,
 	signIn,
 	logOut,
 	getuserData,
@@ -11,12 +11,13 @@ const {
 	sendForgetMail,
 	forgetUserPassword,
 	adminGetAllUsers,
-	adminChangeRoles
+	adminChangeRoles,
+	signUpAndJoinWorkspace
 } = require('../controllers/UserController');
 
 const { isLoggedIn, customRole } = require('../middlewares/auth');
 
-userRoute.route('/login').post(logIn);
+userRoute.route('/signup').post(signUp);
 userRoute.route('/signin').post(signIn);
 userRoute.route('/logout').get(logOut);
 userRoute.route('/getuserdata').get(isLoggedIn, getuserData);
@@ -34,5 +35,8 @@ userRoute
 	.route('/admin/changerole')
 	.post(isLoggedIn, customRole('admin'), adminChangeRoles);
 // manager route
+
+// signup and join workspace
+userRoute.route('/signup-and-join-workspace').post(signUpAndJoinWorkspace);
 
 module.exports = userRoute;

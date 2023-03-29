@@ -1,11 +1,16 @@
 const express = require('express');
 todoItemRouter = express.Router();
-const { isLoggedIn, customRole } = require('../middlewares/auth');
 const {
-	createTodoItem,
-	getAllItemsOfaUser,
-	updateAnTodoItem,
-	deleteAnTodoItem
+	isLoggedIn,
+	customRole,
+	ownerOnlyTask
+} = require('../middlewares/auth');
+const {
+	createTask,
+	getAllTaskOfAProject,
+	updateAnTask,
+	deleteAnTask,
+	getAllStatusTypeOfAProjectTask
 } = require('../controllers/TodoListController');
 
 const {
@@ -15,21 +20,18 @@ const {
 
 assignTaskToUser;
 
-todoItemRouter.route('/create').post(isLoggedIn, createTodoItem);
+todoItemRouter.route('/create').post(isLoggedIn, createTask);
 
-todoItemRouter.route('/getalltask').get(isLoggedIn, getAllItemsOfaUser);
+todoItemRouter.route('/getalltask/:id').get(isLoggedIn, getAllTaskOfAProject);
 
-todoItemRouter.route('/updatetask/:taskId').put(isLoggedIn, updateAnTodoItem);
+todoItemRouter
+	.route('/updatetask/:taskId')
+	.put(isLoggedIn, ownerOnlyTask, updateAnTask);
 
 todoItemRouter
 	.route('/deletetask/:taskId')
-	.delete(isLoggedIn, deleteAnTodoItem);
+	.delete(isLoggedIn, ownerOnlyTask, deleteAnTask);
 
-todoItemRouter
-	.route('/assigntask')
-	.post(isLoggedIn, customRole('manager'), assignTaskToUser);
+todoItemRouter.route('/status/:projectId').get(getAllStatusTypeOfAProjectTask);
 
-todoItemRouter
-	.route('/getassignedtask')
-	.get(isLoggedIn, getAllAssignedTaskOfAUser);
 module.exports = todoItemRouter;

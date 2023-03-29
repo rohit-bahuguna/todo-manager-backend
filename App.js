@@ -2,8 +2,12 @@ const express = require('express');
 const app = express();
 require('dotenv').config();
 const cors = require('cors');
+
 const user = require('./routers/User');
-const todo = require('./routers/TodoList');
+const task = require('./routers/TodoList');
+const workspace = require('./routers/Workspace');
+const project = require('./routers/Project');
+
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const fs = require('fs');
@@ -54,8 +58,10 @@ app.get('/', (req, res) => {
 	});
 });
 
-app.use('/user', user);
-app.use('/todo', todo);
+app.use('/api/user', user);
+app.use('/api/todo', task);
+app.use('/api/workspace', workspace);
+app.use('/api/project', project);
 
 // app.use(async (err, req, res, next) => {
 // 	if (process.env.NODE_ENV === 'developement') {

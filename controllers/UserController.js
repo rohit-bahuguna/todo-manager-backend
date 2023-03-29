@@ -4,29 +4,37 @@ const bcrypt = require('bcryptjs');
 const cookieToken = require('../utils/CookieToken');
 const { sendMail } = require('../utils/emailSender');
 const jwt = require('jsonwebtoken');
-const { findOneAndUpdate } = require('../models/UserModel');
+const WorkspaceModel = require('../models/WorkspaceModel');
 
-exports.logIn = async (req, res) => {
+exports.signUp = async (req, res) => {
 	try {
-		const { name, email, password } = req.body;
+		{
+			const { name, email, password } = req.body;
+			if ((!name, !email, !password)) {
+				throw new Error('all fields are required');
+			}
+			const isUserExist = await userModel.findOne({ email });
 
-		const isExist = await userModel.findOne({ email });
-		if (isExist) {
-			throw new Error('User already exist');
-		} else {
-			const hashedPassword = await bcrypt.hash(password, 10);
-
+			if (isUserExist) {
+				throw new Error('this email id is already registered');
+			}
 			const newUser = new userModel({
 				name,
 				email,
-				password: hashedPassword
+				password
 			});
-			const user = await userModel.create(newUser);
+			const response = await userModel.create(newUser);
 
-			cookieToken(user, res, 'Account created Successfully');
+			//	sending mail to user
+			// const token = response.getJwtToken(process.env.JWT_EXPIRY);
+			// mailQueue.add({ email: response.email, name, token });
+
+			// sending response back
+			cookieToken(res, response, 'Account Created Successfully');
 		}
 	} catch (error) {
-		res.status(400).json(error.message);
+		console.log(error);
+		res.status(400).json({ success: false, message: error.message });
 	}
 };
 
@@ -34,20 +42,24 @@ exports.signIn = async (req, res) => {
 	try {
 		const { email, password } = req.body;
 
+		if ((!email, !password)) {
+			throw new Error('all fields are required');
+		}
+
 		const user = await userModel.findOne({ email }).select('+password');
 
 		if (!user) {
-			throw new Error('Account does not exist');
-		} else {
-			const isPasswordValid = await bcrypt.compare(password, user.password);
-			if (!isPasswordValid) {
-				throw new Error('Invalid Password');
-			}
-			user.password = undefined;
-			cookieToken(user, res, 'Sign in successfully ');
+			throw new Error('Email id does not exist ');
 		}
+
+		const ispasswordValid = await user.ispasswordValid(password);
+		if (!ispasswordValid) {
+			throw new Error('Invalid Password');
+		}
+		user.password = undefined;
+		cookieToken(res, user, `welcome ${user.name}`);
 	} catch (error) {
-		res.status(400).json(error.message);
+		res.status(400).json({ success: false, message: error.message });
 	}
 };
 
@@ -136,7 +148,12 @@ exports.sendForgetMail = async (req, res) => {
 	try {
 		const { email } = req.body;
 
-		const user = await userModel.findOne({ email });
+		const user = await userModel.findOne({ email }).select('+password');
+
+		if (user === null) {
+			throw new Error('Email id does not exist');
+		}
+
 		const newJwtSecret = process.env.JWT_SECRET + user.password;
 		const token = jwt.sign({ id: user._id }, newJwtSecret, {
 			expiresIn: '15m'
@@ -178,7 +195,6 @@ exports.sendForgetMail = async (req, res) => {
 			message: `Email successfully send to ${response.accepted[0]}`
 		});
 	} catch (error) {
-		console.log(error);
 		res.status(400).json(error.message);
 	}
 };
@@ -274,5 +290,60 @@ exports.adminChangeRoles = async (req, res) => {
 			.json({ success: true, message: 'Role updated successfully', user });
 	} catch (error) {
 		res.status(400).json(error.message);
+	}
+};
+
+// signup and join workspace
+
+exports.signUpAndJoinWorkspace = async (req, res) => {
+	try {
+		{
+			const { name, email, password, workspaceId } = req.body;
+			if ((!name, !email, !password)) {
+				throw new Error('all fields are required');
+			}
+			const isUserExist = await userModel.findOne({ email });
+
+			if (isUserExist) {
+				throw new Error('this email id is already registered');
+			}
+			const newUser = new userModel({
+				name,
+				email,
+				password
+			});
+			let user = await userModel.create(newUser);
+
+			//	sending mail to user
+			// const token = response.getJwtToken(process.env.JWT_EXPIRY);
+			// mailQueue.add({ email: response.email, name, token });
+
+			// sending response back
+
+			const workspace = await WorkspaceModel.findByIdAndUpdate(
+				{ _id: workspaceId },
+				{
+					$push: { members: user._id }
+				},
+				{
+					new: true
+				}
+			);
+
+			user = await userModel.findOneAndUpdate(
+				{ _id: user._id },
+				{
+					$push: { workspace: workspaceId }
+				},
+				{
+					new: true
+				}
+			);
+
+			cookieToken(res, user, workspace, 'Account Created Successfully');
+		}
+	} catch (error) {
+		console.log(error);
+		res.status(400).json({ success: false, message: error.message });
 	}
 };
